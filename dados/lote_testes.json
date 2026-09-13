@@ -1,0 +1,11 @@
+{
+  "lote": "Lote de Testes #482",
+  "descricao": "Inventário das prateleiras do laboratório: quantas unidades de cada protótipo existem para coletar. O JSON do pedido só traz o nome do lote, então é este arquivo que 'validar_pedido' usa para conferir codinome e quantidade.",
+  "disponivel": {
+    "Projeto Aurora": 4,
+    "Projeto Vesper": 2,
+    "Projeto Cobalto": 3,
+    "Projeto Miragem": 1,
+    "Projeto Zenite": 5
+  }
+}
