@@ -170,8 +170,19 @@ class RoboColetor(Robo, categoria="coleta"):
 
     # --- pedido -----------------------------------------------------------
     def carregar_pedido(self, pedido) -> None:
-        """Prepara a bandeja para um pedido novo (o modo atual pode recusar)."""
+        """Prepara a bandeja para um pedido novo.
+
+        Dois portões antes de aceitar: o modo atual (`ModoAguardandoVerificacao`
+        recusa) e o `requires` do modelo de features (um item frágil não entra
+        num robô configurado com a rota direta).
+        """
+        # Import local de propósito: `modelo_features` importa este módulo para
+        # que `Robo._registro` já esteja populado quando ele deriva
+        # `TIPOS_VALIDOS`. Importar lá em cima fecharia o ciclo.
+        from celular_robo.modelo_features import validar_pedido_para_rota
+
         self.modo.aceitar_pedido(self, pedido)
+        validar_pedido_para_rota(pedido, self.estrategia.nome_curto)
         self.pedido = pedido
         self.bandeja.esvaziar()
         for item in pedido:
