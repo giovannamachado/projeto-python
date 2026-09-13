@@ -9,7 +9,7 @@ decide sozinho que a bandeja acabou.
 from collections import namedtuple
 from datetime import datetime
 
-from celular_robo.excecoes import ErroColeta
+from celular_robo.excecoes import ConfiguracaoInvalida, ErroColeta
 from celular_robo.modos import ModoAguardandoVerificacao, ModoColetando
 from celular_robo.observadores_base import Observador
 
@@ -120,3 +120,66 @@ class RegistroAuditoria(Observador):
 
     def __repr__(self) -> str:
         return f"RegistroAuditoria({len(self.eventos)} evento(s))"
+
+
+class DespachanteTransporte(Observador):
+    """Extensão opcional (Seção 7): o handoff coletor → transportador.
+
+    Reage a `"lote_aprovado"` criando um `RoboTransportador` pela mesma fábrica
+    do coletor — sem uma linha nova em `RoboColetor`, porque `TIPOS_VALIDOS`
+    vem de `Robo._registro`. Se a área do coletor for a de quarentena, o
+    `excludes` do modelo de features recusa o transportador e o despachante
+    registra a recusa em vez de estourar.
+    """
+
+    def __init__(
+        self,
+        nome_transportador: str = "Transportador-1",
+        area_nome: str | None = None,
+    ) -> None:
+        self.nome_transportador = nome_transportador
+        self.area_nome = area_nome
+        self.transportador = None
+        self.entregas: list[dict[str, int]] = []
+
+    def atualizar(self, evento: str, **dados) -> None:
+        if evento != "lote_aprovado":
+            return
+
+        # Import local: `fabrica` importa este módulo para montar os
+        # observadores padrão do robô, então o import no topo seria circular.
+        from celular_robo.fabrica import criar_robo_configurado
+        from celular_robo.robo import RoboTransportador
+
+        coletor = dados["robo"]
+        area = self.area_nome or coletor.area_nome
+        try:
+            transportador = criar_robo_configurado(
+                "RoboTransportador",
+                self.nome_transportador,
+                estrategia_nome="direta",
+                area_nome=area,
+                com_observadores=False,
+            )
+        except ConfiguracaoInvalida as erro:
+            coletor.notificar(
+                "transporte_recusado", lote=dados.get("lote"), motivo=str(erro)
+            )
+            return
+
+        auditoria = getattr(coletor, "auditoria", None)
+        if auditoria is not None:
+            transportador.adicionar_observador(auditoria)
+
+        transportador.receber(dados["itens"])
+        transportador.estrategia.navegar_ate(
+            transportador, RoboTransportador.PONTO_DE_RETIRADA
+        )
+        self.entregas.append(transportador.entregar())
+        self.transportador = transportador
+
+    def __repr__(self) -> str:
+        return (
+            f"DespachanteTransporte({self.nome_transportador!r}, "
+            f"entregas={len(self.entregas)})"
+        )
