@@ -1,10 +1,3 @@
-# O código usa anotações no estilo `str | None` (PEP 604), que só são válidas
-# a partir do Python 3.10.
-[project]
-name = "celular-robo"
-version = "1.0.0"
-requires-python = ">=3.10"
-
 [tool.pytest.ini_options]
 # Sem isso, "from celular_robo.fabrica import ..." não resolve — o pacote
 # está em src/, não na raiz. Não precisa instalar nada (pip install -e .),
