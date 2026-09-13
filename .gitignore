@@ -5,3 +5,11 @@ __pycache__/
 venv/
 .vscode/
 .idea/
+
+# artefatos de empacotamento (gerados por `pip install .`)
+build/
+dist/
+*.egg-info/
+
+# saída da opção 9 da CLI
+auditoria.json
