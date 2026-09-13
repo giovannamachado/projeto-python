@@ -1,9 +1,9 @@
 """Pedido de coleta: `ItemPedido` e `Pedido` (Seções 2.4 e 2.6).
 
-Módulo acrescentado à estrutura sugerida no enunciado (justificativa no
-README): o pedido é o dado central do projeto e aparece em quase todos os
-outros módulos — deixá-lo solto dentro de `persistencia.py` misturaria o
-formato do dado com a leitura de arquivo.
+Módulo acrescentado à estrutura sugerida no enunciado: o pedido é o dado
+central do projeto e aparece em quase todos os outros módulos — deixá-lo
+solto dentro de `persistencia.py` misturaria o formato do dado com a
+leitura de arquivo.
 
 Aqui mora só a **forma** do pedido. As regras de negócio sobre ele
 (codinome existe no lote? quantidade cabe? `fragil` e `urgente` brigam?)

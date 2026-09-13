@@ -118,8 +118,9 @@ def validar_item(item) -> None:
 def validar_pedido(pedido, estoque: dict) -> None:
     """Valida o conteúdo do pedido contra o inventário do lote.
 
-    O pedido é rejeitado **inteiro** ao primeiro problema, sem coletar nada —
-    ver a justificativa no README (atomicidade).
+    O pedido é rejeitado **inteiro** ao primeiro problema, sem coletar nada.
+    O pedido é a unidade de trabalho: um lote parcialmente coletado é pior de
+    auditar do que um lote recusado com o motivo registrado.
     """
     if len(pedido) == 0:
         raise PedidoInvalido(f"o pedido do lote {pedido.lote!r} está vazio")
