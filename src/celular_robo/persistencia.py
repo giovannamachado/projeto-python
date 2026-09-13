@@ -79,7 +79,9 @@ def montar_robo_de_json(caminho=CAMINHO_CONFIG):
     return montar_robo_de_config(carregar_json(caminho))
 
 
-def montar_pedido_de_json(caminho=CAMINHO_PEDIDO, estoque: dict | None = None) -> Pedido:
+def montar_pedido_de_json(
+    caminho=CAMINHO_PEDIDO, estoque: dict | None = None
+) -> Pedido:
     """Lê o pedido do disco e o valida contra o inventário do lote."""
     pedido = Pedido.de_dict(carregar_json(caminho))
     if estoque is None:
@@ -104,4 +106,3 @@ def salvar_auditoria(auditoria, caminho) -> Path:
     with caminho.open("w", encoding="utf-8") as arquivo:
         json.dump(linhas, arquivo, ensure_ascii=False, indent=2)
     return caminho
-
