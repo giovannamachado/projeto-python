@@ -167,6 +167,7 @@ class RoboColetor(Robo, categoria="coleta"):
         self.area_nome = area_nome
         self.bandeja = Bandeja()
         self.pedido = None
+        self._comandos_pendentes = []
 
     # --- pedido -----------------------------------------------------------
     def carregar_pedido(self, pedido) -> None:
@@ -185,8 +186,25 @@ class RoboColetor(Robo, categoria="coleta"):
         validar_pedido_para_rota(pedido, self.estrategia.nome_curto)
         self.pedido = pedido
         self.bandeja.esvaziar()
+        self._descartar_comandos_de_coleta()
         for item in pedido:
             self.bandeja.reservar(item.codinome, item.quantidade)
+        self._comandos_pendentes = comandos_do_pedido(pedido)
+
+    def _descartar_comandos_de_coleta(self) -> None:
+        """Esquece os comandos do pedido anterior (pendentes e desfazíveis).
+
+        A bandeja acabou de ser esvaziada ou liberada, então desfazer uma
+        coleta antiga não teria o que devolver. O que aconteceu continua
+        registrado na auditoria, que é a trilha de verdade; `_historico_comandos`
+        é só a pilha de `desfazer`.
+        """
+        self._comandos_pendentes = []
+        self._historico_comandos = [
+            comando
+            for comando in self._historico_comandos
+            if not isinstance(comando, ComandoColeta)
+        ]
 
     def processar_pedido(self) -> int:
         """Executa o pedido carregado item a item, guardando o histórico.
@@ -198,9 +216,14 @@ class RoboColetor(Robo, categoria="coleta"):
         if self.pedido is None:
             raise PedidoInvalido(f"{self.nome} não tem pedido carregado")
         total = 0
-        for comando in comandos_do_pedido(self.pedido):
+        while self._comandos_pendentes:
+            comando = self._comandos_pendentes[0]
+            # Só sai da fila depois de executar sem erro: se a coleta falhar no
+            # meio do pedido (item inalcançável, modo recusando), o comando
+            # continua pendente e uma nova chamada retoma daqui, sem repetir o
+            # que já está na bandeja.
             total += comando.executar(self)
-            self._historico_comandos.append(comando)
+            self._historico_comandos.append(self._comandos_pendentes.pop(0))
         return total
 
     def coletar(self, comando) -> int:
@@ -211,8 +234,12 @@ class RoboColetor(Robo, categoria="coleta"):
         """Desfaz o último `ComandoColeta` do histórico (undo do Command)."""
         if not self._historico_comandos:
             raise ErroColeta(f"{self.nome} não tem coleta para desfazer")
-        comando = self._historico_comandos.pop()
+        comando = self._historico_comandos[-1]
+        # `desfazer` primeiro: se ele levantar, o comando continua no histórico
+        # e a pilha não fica furada.
         comando.desfazer(self)
+        self._historico_comandos.pop()
+        self._comandos_pendentes.insert(0, comando)
         return comando
 
     # --- sistema de sucção ------------------------------------------------
@@ -257,6 +284,7 @@ class RoboColetor(Robo, categoria="coleta"):
         conteudo = self.bandeja.itens
         self.bandeja.esvaziar()
         self.pedido = None
+        self._descartar_comandos_de_coleta()
         return conteudo
 
     def __repr__(self) -> str:

@@ -2,12 +2,15 @@
 
 import pytest
 
-from celular_robo.excecoes import ErroColeta
+from celular_robo.excecoes import ErroColeta, PedidoInvalido
+from celular_robo.fabrica import criar_robo_configurado
 from celular_robo.modos import ModoAguardandoVerificacao, ModoColetando
 from celular_robo.observadores import DespachanteTransporte
+from celular_robo.pedido import ItemPedido, Pedido
 from celular_robo.persistencia import (
     montar_pedido_de_json,
     montar_robo_de_json,
+    salvar_auditoria,
 )
 from celular_robo.robo import RoboTransportador
 
@@ -128,3 +131,68 @@ def test_fluxo_a_partir_dos_arquivos_de_dados():
     assert robo.nome == "Coletor-1"
     assert robo.bandeja.completa
     assert isinstance(robo.modo, ModoAguardandoVerificacao)
+
+
+# --- retomada do pedido: o processamento não repete o que já está na bandeja --
+
+def test_reprocessar_depois_de_desfazer_nao_duplica(coletor, pedido_simples):
+    """Processar → desfazer → processar recoleta só o item devolvido.
+
+    Antes, `processar_pedido` remontava os comandos do pedido inteiro e
+    ressomava na bandeja o que já estava lá, estourando o teto do descriptor
+    `QuantidadeValida` com um `ValueError` cru.
+    """
+    coletor.carregar_pedido(pedido_simples)
+    coletor.processar_pedido()
+    coletor.desfazer_ultima_coleta()
+    assert len(coletor.bandeja) == 2
+
+    recoletadas = coletor.processar_pedido()
+
+    assert recoletadas == 1
+    assert len(coletor.bandeja) == pedido_simples.total_unidades
+    assert coletor.bandeja.completa
+    assert isinstance(coletor.modo, ModoAguardandoVerificacao)
+
+
+def test_processar_de_novo_retoma_do_item_que_falhou():
+    """Um item inalcançável não faz o pedido recomeçar do zero na 2ª tentativa."""
+    coletor = criar_robo_configurado(
+        "RoboColetor", "Coletor-Quarentena",
+        estrategia_nome="dupla_conferencia", area_nome="area_quarentena",
+    )
+    # (5, 3) fica dentro do corredor de quarentena, que é obstáculo.
+    pedido = Pedido("Lote de Testes #482", [
+        ItemPedido("Projeto Vesper", 1, (7, 2), fragil=True),
+        ItemPedido("Projeto Miragem", 1, (5, 3), fragil=True),
+    ])
+    coletor.carregar_pedido(pedido)
+
+    with pytest.raises(PedidoInvalido):
+        coletor.processar_pedido()
+    assert len(coletor.bandeja) == 1
+
+    # A segunda tentativa falha no mesmo item, sem recoletar o primeiro.
+    with pytest.raises(PedidoInvalido):
+        coletor.processar_pedido()
+    assert coletor.bandeja.quantidade_de("Projeto Vesper") == 1
+    assert len(coletor.bandeja) == 1
+
+
+def test_aprovar_esvazia_a_pilha_de_desfazer(coletor, pedido_simples):
+    """Com o lote entregue não há coleta a desfazer — o erro é de domínio."""
+    coletor.carregar_pedido(pedido_simples)
+    coletor.processar_pedido()
+    coletor.equipe.aprovar(coletor)
+
+    with pytest.raises(ErroColeta):
+        coletor.desfazer_ultima_coleta()
+
+
+def test_salvar_auditoria_em_caminho_invalido_vira_erro_de_dominio(coletor, tmp_path):
+    """Falha de escrita vira `ErroColeta`, não um `OSError` cru na CLI."""
+    arquivo = tmp_path / "ocupado"
+    arquivo.write_text("não sou diretório", encoding="utf-8")
+
+    with pytest.raises(ErroColeta):
+        salvar_auditoria(coletor.auditoria, arquivo / "trilha.json")

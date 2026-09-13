@@ -185,6 +185,11 @@ def main(argv=None) -> int:
             executar_opcao(escolha, robo, argumentos.pedido, estoque)
         except ErroColeta as erro:
             print(f"{type(erro).__name__}: {erro}")
+        except (EOFError, KeyboardInterrupt):
+            # Ctrl+C/Ctrl+D num prompt de dentro de uma opção (motivo da
+            # rejeição, caminho do pedido, arquivo de saída): cancela só aquela
+            # opção, sem derrubar o menu.
+            print("\nOperação cancelada.")
         print()
 
 

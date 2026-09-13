@@ -102,7 +102,12 @@ def salvar_auditoria(auditoria, caminho) -> Path:
         }
         for linha in auditoria
     ]
-    caminho.parent.mkdir(parents=True, exist_ok=True)
-    with caminho.open("w", encoding="utf-8") as arquivo:
-        json.dump(linhas, arquivo, ensure_ascii=False, indent=2)
+    try:
+        caminho.parent.mkdir(parents=True, exist_ok=True)
+        with caminho.open("w", encoding="utf-8") as arquivo:
+            json.dump(linhas, arquivo, ensure_ascii=False, indent=2)
+    except OSError as erro:
+        # Mesma tradução que `carregar_json` faz na leitura: problema de disco
+        # vira `ErroColeta`, que é o que a CLI sabe mostrar.
+        raise ErroColeta(f"não consegui gravar a trilha em {caminho}: {erro}") from erro
     return caminho

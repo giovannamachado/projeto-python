@@ -13,7 +13,7 @@ isso está na pasta `dados/`, e dá para trocar os arquivos sem mexer no código
 
 ## Instalação
 
-Precisa de Python 3 e do pytest. O resto é biblioteca padrão.
+Precisa de Python 3.10 ou mais novo e do pytest. O resto é biblioteca padrão.
 
 ```bash
 python3 -m venv .venv
