@@ -28,10 +28,7 @@ def test_pedido_vazio_e_recusado(estoque):
 
 
 def test_item_fragil_e_urgente_e_recusado(estoque):
-    """O conflito é do item, não da configuração: `fragil` e `urgente` no
-    mesmo item se contradizem sem que exista robô nenhum envolvido, então
-    quem recusa é `PedidoInvalido`.
-    """
+    """O conflito é do item, não da configuração — por isso `PedidoInvalido`."""
     pedido = Pedido(LOTE, [
         ItemPedido("Projeto Vesper", 1, (7, 2), fragil=True, urgente=True),
     ])

@@ -218,10 +218,9 @@ class RoboColetor(Robo, categoria="coleta"):
         total = 0
         while self._comandos_pendentes:
             comando = self._comandos_pendentes[0]
-            # Só sai da fila depois de executar sem erro: se a coleta falhar no
-            # meio do pedido (item inalcançável, modo recusando), o comando
-            # continua pendente e uma nova chamada retoma daqui, sem repetir o
-            # que já está na bandeja.
+            # Só sai da fila depois de executar sem erro: se a coleta falhar
+            # no meio do pedido, o comando continua pendente e uma nova chamada
+            # retoma daqui em vez de repetir o que já está na bandeja.
             total += comando.executar(self)
             self._historico_comandos.append(self._comandos_pendentes.pop(0))
         return total

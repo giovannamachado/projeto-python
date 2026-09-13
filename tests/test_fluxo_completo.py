@@ -133,15 +133,8 @@ def test_fluxo_a_partir_dos_arquivos_de_dados():
     assert isinstance(robo.modo, ModoAguardandoVerificacao)
 
 
-# --- retomada do pedido: o processamento não repete o que já está na bandeja --
-
 def test_reprocessar_depois_de_desfazer_nao_duplica(coletor, pedido_simples):
-    """Processar → desfazer → processar recoleta só o item devolvido.
-
-    Antes, `processar_pedido` remontava os comandos do pedido inteiro e
-    ressomava na bandeja o que já estava lá, estourando o teto do descriptor
-    `QuantidadeValida` com um `ValueError` cru.
-    """
+    """Desfazer e processar de novo recoleta só o item devolvido."""
     coletor.carregar_pedido(pedido_simples)
     coletor.processar_pedido()
     coletor.desfazer_ultima_coleta()
@@ -190,7 +183,7 @@ def test_aprovar_esvazia_a_pilha_de_desfazer(coletor, pedido_simples):
 
 
 def test_salvar_auditoria_em_caminho_invalido_vira_erro_de_dominio(coletor, tmp_path):
-    """Falha de escrita vira `ErroColeta`, não um `OSError` cru na CLI."""
+    """Falha de escrita vira `ErroColeta`, que é o que a CLI sabe mostrar."""
     arquivo = tmp_path / "ocupado"
     arquivo.write_text("não sou diretório", encoding="utf-8")
 
