@@ -1,4 +1,4 @@
-"""Configuração e persistência: JSON → robô / pedido (Seção 2.6).
+"""Configuração e persistência: JSON -> robô / pedido (Seção 2.6).
 
 Mesmo par de funções do capstone do curso, com a mesma assimetria intencional:
 `montar_robo_de_config` recebe um `dict` já carregado, `montar_pedido_de_json`
@@ -32,7 +32,7 @@ def carregar_json(caminho) -> dict:
 
 
 def carregar_lote(caminho=CAMINHO_LOTE) -> dict[str, int]:
-    """Inventário do lote: codinome → unidades disponíveis na prateleira.
+    """Inventário do lote: codinome -> unidades disponíveis na prateleira.
 
     O JSON do pedido só traz o *nome* do lote; é este arquivo que diz o que
     existe de fato para coletar, e é contra ele que `validar_pedido` compara.
@@ -75,7 +75,7 @@ def montar_robo_de_config(config: dict):
 
 
 def montar_robo_de_json(caminho=CAMINHO_CONFIG):
-    """Atalho de conveniência para a CLI: arquivo → `montar_robo_de_config`."""
+    """Atalho de conveniência para a CLI: arquivo -> `montar_robo_de_config`."""
     return montar_robo_de_config(carregar_json(caminho))
 
 

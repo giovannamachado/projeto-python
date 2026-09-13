@@ -123,7 +123,7 @@ class RegistroAuditoria(Observador):
 
 
 class DespachanteTransporte(Observador):
-    """Extensão opcional (Seção 7): o handoff coletor → transportador.
+    """Extensão opcional (Seção 7): o handoff coletor -> transportador.
 
     Reage a `"lote_aprovado"` criando um `RoboTransportador` pela mesma fábrica
     do coletor — sem uma linha nova em `RoboColetor`, porque `TIPOS_VALIDOS`

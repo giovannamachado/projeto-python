@@ -51,7 +51,7 @@ def montar_argumentos() -> argparse.ArgumentParser:
     )
     analisador.add_argument(
         "--lote", default=CAMINHO_LOTE,
-        help="JSON com o inventário do lote (codinome → disponível).",
+        help="JSON com o inventário do lote (codinome -> disponível).",
     )
     return analisador
 
