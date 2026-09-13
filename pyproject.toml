@@ -1,0 +1,5 @@
+[tool.pytest.ini_options]
+# Sem isso, "from celular_robo.fabrica import ..." não resolve — o pacote
+# está em src/, não na raiz. Não precisa instalar nada (pip install -e .),
+# só rodar `pytest -v` na raiz do projeto.
+pythonpath = ["src"]
