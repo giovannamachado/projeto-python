@@ -5,6 +5,7 @@
 específico da coleta.
 """
 
+from celular_robo.comandos import ComandoColeta, comandos_do_pedido
 from celular_robo.excecoes import ErroColeta, PedidoInvalido
 from celular_robo.modos import ModoColetando
 from celular_robo.robo_base import Robo
@@ -176,9 +177,32 @@ class RoboColetor(Robo, categoria="coleta"):
         for item in pedido:
             self.bandeja.reservar(item.codinome, item.quantidade)
 
+    def processar_pedido(self) -> int:
+        """Executa o pedido carregado item a item, guardando o histórico.
+
+        Cada item vira um `ComandoColeta`; os comandos executados vão para
+        `_historico_comandos` (o mesmo histórico do Command do curso), que é o
+        que torna o `desfazer` possível depois.
+        """
+        if self.pedido is None:
+            raise PedidoInvalido(f"{self.nome} não tem pedido carregado")
+        total = 0
+        for comando in comandos_do_pedido(self.pedido):
+            total += comando.executar(self)
+            self._historico_comandos.append(comando)
+        return total
+
     def coletar(self, comando) -> int:
         """Executa uma coleta passando pelo modo atual (State) e pela rota."""
         return self.modo.coletar(self, comando)
+
+    def desfazer_ultima_coleta(self) -> ComandoColeta:
+        """Desfaz o último `ComandoColeta` do histórico (undo do Command)."""
+        if not self._historico_comandos:
+            raise ErroColeta(f"{self.nome} não tem coleta para desfazer")
+        comando = self._historico_comandos.pop()
+        comando.desfazer(self)
+        return comando
 
     # --- sistema de sucção ------------------------------------------------
     def sugar(self, codinome: str, quantidade: int = 1) -> int:
@@ -204,6 +228,8 @@ class RoboColetor(Robo, categoria="coleta"):
         self.notificar(
             "coleta_desfeita", codinome=codinome, quantidade=quantidade
         )
+        if not self.bandeja.completa:
+            self.notificar("bandeja_reaberta", lote=self.nome_do_lote)
         return restantes
 
     # --- estado -----------------------------------------------------------
